@@ -7,8 +7,11 @@ import com.example.newsapp.domain.repositories.NewsRepository
 import com.example.newsapp.util.Resource
 import kotlinx.coroutines.flow.Flow
 import retrofit2.Response
+import javax.inject.Inject
+import javax.inject.Singleton
 
-class NewsRepositoryImpl(private val apiService: APIService): NewsRepository {
+@Singleton
+class NewsRepositoryImpl @Inject constructor(private val apiService: APIService): NewsRepository {
     override suspend fun getNewsHeadlines(country: String, page: Int): Resource<APIResponse> =
         responseToResource(apiService.getNewsHeadlines(country, page))
 
