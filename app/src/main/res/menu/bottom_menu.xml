@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:id="@+id/newsFragment"
+        android:icon="@drawable/ic_news"
+        android:title="@string/news_headlines" />
+
+    <item android:id="@+id/savedNewsFragment"
+        android:icon="@drawable/ic_saved_news"
+        android:title="@string/saved_news" />
+</menu>
