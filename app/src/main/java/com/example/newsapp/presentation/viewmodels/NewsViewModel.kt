@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.newsapp.data.model.APIResponse
 import com.example.newsapp.domain.usecases.GetNewsHeadlinesUseCase
+import com.example.newsapp.domain.usecases.GetSearchedNewsUseCase
 import com.example.newsapp.util.Resource
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
@@ -13,19 +14,25 @@ import javax.inject.Inject
 
 @HiltViewModel
 class NewsViewModel @Inject constructor(
-    private val getNewsHeadlinesUseCase: GetNewsHeadlinesUseCase
+    private val getNewsHeadlinesUseCase: GetNewsHeadlinesUseCase,
+    private val getSearchedNewsUseCase: GetSearchedNewsUseCase
     ): ViewModel() {
 
     var newsHeadlines: MutableLiveData<Resource<APIResponse>> = MutableLiveData()
+    var searchedNewsHeadlines: MutableLiveData<Resource<APIResponse>> = MutableLiveData()
 
     // todo check network connection
-    fun getNewsHeadlines(country: String, page: Int) = viewModelScope.launch(Dispatchers.IO) {
-        newsHeadlines.postValue(Resource.Loading())
-        try {
+    fun getNewsHeadlines(country: String, page: Int) =
+        viewModelScope.launch(Dispatchers.IO) {
+            newsHeadlines.postValue(Resource.Loading())
             val apiResult = getNewsHeadlinesUseCase.execute(country, page)
             newsHeadlines.postValue(apiResult)
-        } catch (e: Exception) {
-            newsHeadlines.postValue(Resource.Error(e.message.toString()))
         }
-    }
+
+    fun getSearchedNews(query: String, country: String, page: Int) =
+        viewModelScope.launch(Dispatchers.IO) {
+            searchedNewsHeadlines.postValue(Resource.Loading())
+            val apiResult = getSearchedNewsUseCase.execute(query, country, page)
+            searchedNewsHeadlines.postValue(apiResult)
+        }
 }

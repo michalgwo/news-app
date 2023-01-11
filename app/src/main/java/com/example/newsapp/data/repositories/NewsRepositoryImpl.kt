@@ -19,9 +19,8 @@ class NewsRepositoryImpl @Inject constructor(private val apiService: APIService)
         TODO("Not yet implemented")
     }
 
-    override suspend fun getSearchedNews(query: String): Resource<APIResponse> {
-        TODO("Not yet implemented")
-    }
+    override suspend fun getSearchedNews(query: String, country: String, page: Int): Resource<APIResponse> =
+        responseToResource(apiService.getSearchedNews(query, country, page))
 
     override suspend fun saveNews(article: Article) {
         TODO("Not yet implemented")
