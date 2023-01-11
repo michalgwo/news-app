@@ -9,6 +9,7 @@ import android.view.ViewGroup
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.hilt.navigation.fragment.hiltNavGraphViewModels
+import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.newsapp.R
 import com.example.newsapp.databinding.FragmentNewsBinding
@@ -37,6 +38,17 @@ class NewsFragment : Fragment() {
     private fun initRecyclerView() {
         binding.rvNews.layoutManager = LinearLayoutManager(requireContext().applicationContext)
         binding.rvNews.adapter = adapter
+        adapter.setOnItemClickListener {
+            if (it.url.isEmpty()) {
+                return@setOnItemClickListener
+            }
+
+            val bundle = Bundle().apply {
+                putSerializable("selectedArticle", it)
+            }
+
+            findNavController().navigate(R.id.action_newsFragment_to_infoFragment, bundle)
+        }
 
         populateRecyclerView()
     }
