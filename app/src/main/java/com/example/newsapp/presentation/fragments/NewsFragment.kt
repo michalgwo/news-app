@@ -25,12 +25,11 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 
 @AndroidEntryPoint
 class NewsFragment : Fragment() {
     private lateinit var binding: FragmentNewsBinding
-    @Inject lateinit var adapter: NewsAdapter
+    private lateinit var adapter: NewsAdapter
     private val viewModel: NewsViewModel by hiltNavGraphViewModels(R.id.nav_graph)
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
@@ -83,15 +82,20 @@ class NewsFragment : Fragment() {
     }
 
     private fun initRecyclerView() {
+        adapter = NewsAdapter()
         binding.rvNews.layoutManager = LinearLayoutManager(requireContext().applicationContext)
         binding.rvNews.adapter = adapter
         adapter.setOnItemClickListener {
-            if (it.url.isEmpty())
+            if (it.url.isNullOrEmpty())
                 return@setOnItemClickListener
+
+            val bundle = Bundle().apply {
+                putSerializable("selectedArticle", it)
+            }
 
             findNavController().navigate(
                 R.id.action_newsFragment_to_infoFragment,
-                Bundle().apply { putSerializable("selectedArticle", it) }
+                bundle
             )
         }
     }

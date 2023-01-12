@@ -5,4 +5,8 @@
     <string name="saved_news">Saved News</string>
     <string name="news_image">News image</string>
     <string name="unexpected_error">Unexpected error occurred</string>
+    <string name="save_article">Save article</string>
+    <string name="article_saved">Article saved</string>
+    <string name="article_deleted">Article deleted</string>
+    <string name="undo">Undo</string>
 </resources>
