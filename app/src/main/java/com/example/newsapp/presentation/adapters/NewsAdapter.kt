@@ -49,9 +49,11 @@ class NewsAdapter: RecyclerView.Adapter<NewsAdapter.ViewHolder>() {
     inner class ViewHolder(private val binding: ListItemBinding): RecyclerView.ViewHolder(binding.root) {
         fun bind(article: Article) {
             binding.apply {
-                Glide.with(ivListItem.context)
-                    .load(article.urlToImage)
-                    .into(ivListItem)
+                article.urlToImage?.let { imageUrl ->
+                    Glide.with(ivListItem.context)
+                        .load(imageUrl)
+                        .into(ivListItem)
+                }
 
                 tvTitle.text = article.title
                 tvDescription.text = article.description
