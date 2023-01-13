@@ -75,8 +75,7 @@ class NewsFragment : Fragment() {
                 job = MainScope().launch {
                     delay(SEARCH_TIME_DELAY)
                     setSearching(true)
-                    viewModel.resetSearchedNews()
-                    viewModel.getSearchedNews(text, false)
+                    viewModel.getSearchedNews(text, false, resetSearchedNews = true)
                 }
 
                 return false

@@ -17,8 +17,6 @@ import com.example.newsapp.util.Resource
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import org.json.JSONObject
-import retrofit2.Response
 import javax.inject.Inject
 
 
@@ -59,19 +57,33 @@ class NewsViewModel @Inject constructor(
             _newsHeadlines.postValue(Resource.Loading())
 
             if (!hasInternetConnection()) {
-                _newsHeadlines.postValue(
-                    Resource.Error(getApplication<NewsApp>().getString(R.string.no_internet))
-                )
+                _newsHeadlines.postValue(Resource.Error(getApplication<NewsApp>().getString(R.string.no_internet)))
                 return@launch
             }
 
             try {
-                if (loadNextPage) {
+                if (loadNextPage)
                     _newsPage++
+
+                val result = getNewsHeadlinesUseCase.execute(COUNTRY, _newsPage)
+
+                if (result is Resource.Error) {
+                    _newsHeadlines.postValue(result)
+                    return@launch
                 }
 
-                val apiResult = getNewsHeadlinesUseCase.execute(COUNTRY, _newsPage)
-                _newsHeadlines.postValue(handleNewsResponse(apiResult))
+                if (_newsResponse == null) {
+                    _newsResponse = result.data
+                } else if (result.data != null) {
+                    val newArticles = result.data.articles
+                    _newsResponse?.articles?.addAll(newArticles)
+                }
+
+                if (_newsResponse != null) {
+                    _newsHeadlines.postValue(Resource.Success(_newsResponse!!))
+                } else {
+                    _newsHeadlines.postValue(result)
+                }
             } catch (e: Exception) {
                 _newsHeadlines.postValue(Resource.Error(e.message.toString()))
             }
@@ -86,32 +98,47 @@ class NewsViewModel @Inject constructor(
         _newsHeadlines.value = Resource.Success(_newsResponse!!)
     }
 
-    fun getSearchedNews(query: String, loadNextPage: Boolean) =
+    fun getSearchedNews(query: String, loadNextPage: Boolean, resetSearchedNews: Boolean = false) =
         viewModelScope.launch(Dispatchers.IO) {
+            if (resetSearchedNews) {
+                _searchedNewsPage = 1
+                _searchedNewsResponse = null
+            }
+
             _searchedNewsHeadlines.postValue(Resource.Loading())
 
             if (!hasInternetConnection()) {
-                _newsHeadlines.postValue(
-                    Resource.Error(getApplication<NewsApp>().getString(R.string.no_internet))
-                )
+                _newsHeadlines.postValue(Resource.Error(getApplication<NewsApp>().getString(R.string.no_internet)))
                 return@launch
             }
 
             try {
-                if (loadNextPage) {
+                if (loadNextPage)
                     _searchedNewsPage++
+
+                val result = getSearchedNewsUseCase.execute(query, COUNTRY, _searchedNewsPage)
+
+                if (result is Resource.Error) {
+                    _searchedNewsHeadlines.postValue(result)
+                    return@launch
                 }
-                val apiResult = getSearchedNewsUseCase.execute(query, COUNTRY, _searchedNewsPage)
-                _searchedNewsHeadlines.postValue(handleSearchedNewsResponse(apiResult))
+
+                if (_searchedNewsResponse == null) {
+                    _searchedNewsResponse = result.data
+                } else if (result.data != null) {
+                    val newArticles = result.data.articles
+                    _searchedNewsResponse?.articles?.addAll(newArticles)
+                }
+
+                if (_searchedNewsResponse != null) {
+                    _searchedNewsHeadlines.postValue(Resource.Success(_searchedNewsResponse!!))
+                } else {
+                    _searchedNewsHeadlines.postValue(result)
+                }
             } catch (e: Exception) {
                 _searchedNewsHeadlines.postValue(Resource.Error(e.message.toString()))
             }
         }
-
-    fun resetSearchedNews() {
-        _searchedNewsPage = 1
-        _searchedNewsResponse = null
-    }
 
     fun saveArticle(article: Article) = viewModelScope.launch(Dispatchers.IO) {
         saveNewsUseCase.execute(article)
@@ -125,55 +152,6 @@ class NewsViewModel @Inject constructor(
         getSavedNewsUseCase.execute().collect {
             emit(it)
         }
-    }
-
-    private fun handleNewsResponse(response: Response<APIResponse>): Resource<APIResponse> {
-        if (response.isSuccessful) {
-            response.body()?.let { result ->
-                if (_newsResponse == null) {
-                    _newsResponse = result
-                } else {
-                    val newArticles = result.articles
-                    _newsResponse?.articles?.addAll(newArticles)
-                }
-
-                return Resource.Success(_newsResponse ?: result)
-            }
-        } else {
-            response.errorBody()?.let {
-                try {
-                    val jsonErrorObject = JSONObject(it.string())
-                    return Resource.Error(jsonErrorObject.getString("message"))
-                } catch (e: Exception) {
-                    return Resource.Error(e.message.toString())
-                }
-            }
-        }
-        return Resource.Error(response.message())
-    }
-
-    private fun handleSearchedNewsResponse(response: Response<APIResponse>): Resource<APIResponse> {
-        if (response.isSuccessful) {
-            response.body()?.let { result ->
-                if (_searchedNewsResponse == null) {
-                    _searchedNewsResponse = result
-                } else {
-                    val newArticles = result.articles
-                    _searchedNewsResponse?.articles?.addAll(newArticles)
-                }
-                return Resource.Success(_searchedNewsResponse ?: result)
-            }
-        } else {
-            response.errorBody()?.let {
-                try {
-                    val jsonErrorObject = JSONObject(it.string())
-                    return Resource.Error(jsonErrorObject.getString("message"))
-                } catch (e: Exception) {
-                    return Resource.Error(e.message.toString())
-                }
-            }
-        }
-        return Resource.Error(response.message())
     }
 
     private fun hasInternetConnection(): Boolean {
