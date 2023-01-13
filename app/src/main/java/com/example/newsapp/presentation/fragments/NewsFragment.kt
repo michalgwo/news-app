@@ -194,9 +194,10 @@ class NewsFragment : Fragment() {
             val isAtLastItem = firstVisibleItemPosition + visibleItemCount >= totalItemCount
             val isNotAtBeginning = firstVisibleItemPosition > 0
             val isTotalMoreThanVisible = totalItemCount >= PAGE_SIZE
+            val isLastPage = if (isSearching) isLastPageSearch else isLastPageAll
 
             if (isAtLastItem && isNotAtBeginning && isTotalMoreThanVisible
-                && !isLoading && !isLastPageAll && isScrolling) {
+                && !isLoading && !isLastPage && isScrolling) {
                 if (isSearching && !binding.searchView.query.isNullOrEmpty()) {
                     viewModel.getSearchedNews(binding.searchView.query.toString(), true)
                 } else {
