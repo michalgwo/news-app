@@ -1,10 +1,17 @@
 package com.example.newsapp.presentation.viewmodels
 
 import android.app.Application
+import android.content.Context
+import android.net.ConnectivityManager
+import android.net.ConnectivityManager.*
+import android.net.NetworkCapabilities.*
+import android.os.Build
 import androidx.lifecycle.*
+import com.example.newsapp.R
 import com.example.newsapp.data.model.APIResponse
 import com.example.newsapp.data.model.Article
 import com.example.newsapp.domain.usecases.*
+import com.example.newsapp.presentation.NewsApp
 import com.example.newsapp.util.Constants.Companion.COUNTRY
 import com.example.newsapp.util.Resource
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -49,6 +56,13 @@ class NewsViewModel @Inject constructor(
         viewModelScope.launch(Dispatchers.IO) {
             _newsHeadlines.postValue(Resource.Loading())
 
+            if (!hasInternetConnection()) {
+                _newsHeadlines.postValue(
+                    Resource.Error(getApplication<NewsApp>().getString(R.string.no_internet))
+                )
+                return@launch
+            }
+
             try {
                 if (loadNextPage) {
                     _newsPage++
@@ -73,6 +87,13 @@ class NewsViewModel @Inject constructor(
     fun getSearchedNews(query: String, loadNextPage: Boolean) =
         viewModelScope.launch(Dispatchers.IO) {
             _searchedNewsHeadlines.postValue(Resource.Loading())
+
+            if (!hasInternetConnection()) {
+                _newsHeadlines.postValue(
+                    Resource.Error(getApplication<NewsApp>().getString(R.string.no_internet))
+                )
+                return@launch
+            }
 
             try {
                 if (loadNextPage) {
@@ -133,5 +154,34 @@ class NewsViewModel @Inject constructor(
             }
         }
         return Resource.Error(response.message())
+    }
+
+    private fun hasInternetConnection(): Boolean {
+        val connectivityManager = getApplication<NewsApp>()
+            .getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            val activeNetwork = connectivityManager.activeNetwork ?: return false
+            val capabilities = connectivityManager.getNetworkCapabilities(activeNetwork) ?: return false
+
+            return when {
+                capabilities.hasTransport(TRANSPORT_WIFI) -> true
+                capabilities.hasTransport(TRANSPORT_CELLULAR) -> true
+                capabilities.hasTransport(TRANSPORT_ETHERNET) -> true
+                else -> false
+            }
+        } else {
+            @Suppress("DEPRECATION")
+            connectivityManager.activeNetworkInfo?.run {
+                return when(type) {
+                    TYPE_WIFI -> true
+                    TYPE_MOBILE -> true
+                    TYPE_ETHERNET -> true
+                    else -> false
+                }
+            }
+        }
+
+        return false
     }
 }
