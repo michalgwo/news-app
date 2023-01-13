@@ -17,8 +17,10 @@ import com.example.newsapp.util.Resource
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import org.json.JSONObject
 import retrofit2.Response
 import javax.inject.Inject
+
 
 @HiltViewModel
 class NewsViewModel @Inject constructor(
@@ -137,6 +139,15 @@ class NewsViewModel @Inject constructor(
 
                 return Resource.Success(_newsResponse ?: result)
             }
+        } else {
+            response.errorBody()?.let {
+                try {
+                    val jsonErrorObject = JSONObject(it.string())
+                    return Resource.Error(jsonErrorObject.getString("message"))
+                } catch (e: Exception) {
+                    return Resource.Error(e.message.toString())
+                }
+            }
         }
         return Resource.Error(response.message())
     }
@@ -151,6 +162,15 @@ class NewsViewModel @Inject constructor(
                     _searchedNewsResponse?.articles?.addAll(newArticles)
                 }
                 return Resource.Success(_searchedNewsResponse ?: result)
+            }
+        } else {
+            response.errorBody()?.let {
+                try {
+                    val jsonErrorObject = JSONObject(it.string())
+                    return Resource.Error(jsonErrorObject.getString("message"))
+                } catch (e: Exception) {
+                    return Resource.Error(e.message.toString())
+                }
             }
         }
         return Resource.Error(response.message())
